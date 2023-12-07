@@ -79,11 +79,15 @@ export default function App() {
 
   useEffect(
     function () {
+      const controller = new AbortController();
+
       const fetchData = async () => {
         setIsLoading(true);
         setError('');
         try {
-          const response = await axios.get(`https://www.omdbapi.com/?apikey=${apikey}&s=${query}`);
+          const response = await axios.get(`https://www.omdbapi.com/?apikey=${apikey}&s=${query}`, {
+            signal: controller.signal,
+          });
           if (response.status !== 200) {
             throw new Error();
           }
@@ -102,7 +106,12 @@ export default function App() {
         setError('');
         return;
       }
+      handleCloseMovie();
       fetchData();
+
+      return function () {
+        controller.abort();
+      };
     },
     [query]
   );
@@ -297,6 +306,18 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
       getMovieDetails();
     },
     [selectedId]
+  );
+
+  useEffect(
+    function () {
+      if (!title) return;
+      document.title = `Movie | ${title}`;
+
+      return function () {
+        document.title = 'Movie Popcorn';
+      };
+    },
+    [title]
   );
   return (
     <div className="details">
